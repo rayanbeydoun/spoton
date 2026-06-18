@@ -61,8 +61,9 @@ export async function syncSeason(season: number): Promise<SyncResult> {
   const fixtureRows = matches.map((m) => ({
     external_id: m.id,
     gameweek_id: gwId.get(roundNumber(m)!)!,
-    home_team: m.homeTeam.shortName || m.homeTeam.name,
-    away_team: m.awayTeam.shortName || m.awayTeam.name,
+    // Cup knockout fixtures have no teams until they're decided — show TBD.
+    home_team: m.homeTeam.shortName || m.homeTeam.name || "TBD",
+    away_team: m.awayTeam.shortName || m.awayTeam.name || "TBD",
     home_crest: m.homeTeam.crest ?? null,
     away_crest: m.awayTeam.crest ?? null,
     kickoff: m.utcDate,
