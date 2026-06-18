@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CopyInvite } from "@/components/CopyInvite";
+import { LocalTime } from "@/components/LocalTime";
 import { fmtDateTime, seasonLabel } from "@/lib/format";
 import { isLocked, type Gameweek } from "@/lib/types";
 
@@ -166,7 +167,11 @@ export default async function LeaguePage({
                     <p className="font-bold">Gameweek {gw.number}</p>
                     <p className="text-xs text-muted">
                       {locked ? "Locked · " : "Deadline "}
-                      {fmtDateTime(gw.deadline)}
+                      {gw.deadline ? (
+                        <LocalTime iso={gw.deadline} fallback={fmtDateTime(gw.deadline)} />
+                      ) : (
+                        "TBD"
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">

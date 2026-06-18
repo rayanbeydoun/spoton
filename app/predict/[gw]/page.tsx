@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PredictionForm, type FixtureVM } from "@/components/PredictionForm";
+import { LocalTime } from "@/components/LocalTime";
 import { fmtDateTime } from "@/lib/format";
 import { isLocked, type Fixture, type Gameweek, type Prediction } from "@/lib/types";
 
@@ -57,6 +58,7 @@ export default async function PredictPage({
     id: f.id,
     home_team: f.home_team,
     away_team: f.away_team,
+    kickoff: f.kickoff,
     kickoffLabel: fmtDateTime(f.kickoff),
     home: predByFixture.get(f.id)?.home_pred ?? null,
     away: predByFixture.get(f.id)?.away_pred ?? null,
@@ -74,7 +76,15 @@ export default async function PredictPage({
         <h1 className="text-2xl font-extrabold">Gameweek {gameweekRow.number}</h1>
         <p className="text-muted">
           {locked ? "Locked · " : "Predictions lock at "}
-          {fmtDateTime(gameweekRow.deadline)}
+          {gameweekRow.deadline ? (
+            <LocalTime
+              iso={gameweekRow.deadline}
+              fallback={fmtDateTime(gameweekRow.deadline)}
+              withZone
+            />
+          ) : (
+            "TBD"
+          )}
         </p>
       </div>
 

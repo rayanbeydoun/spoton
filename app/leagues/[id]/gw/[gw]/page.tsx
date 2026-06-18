@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { LocalTime } from "@/components/LocalTime";
 import { fmtDateTime } from "@/lib/format";
 import { isLocked, type Fixture, type Gameweek, type Prediction } from "@/lib/types";
 
@@ -94,7 +95,14 @@ export default async function ReviewPage({
           ← {league.name}
         </Link>
         <h1 className="text-2xl font-extrabold">Gameweek {gameweek.number} results</h1>
-        <p className="text-muted">Locked {fmtDateTime(gameweek.deadline)}</p>
+        <p className="text-muted">
+          Locked{" "}
+          {gameweek.deadline ? (
+            <LocalTime iso={gameweek.deadline} fallback={fmtDateTime(gameweek.deadline)} />
+          ) : (
+            "TBD"
+          )}
+        </p>
       </div>
 
       <div className="card overflow-x-auto p-0">
