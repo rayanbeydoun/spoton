@@ -1,5 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/admin";
-import { fetchPlMatches, mapStatus, type FdMatch } from "@/lib/football";
+import { fetchMatches, mapStatus, roundNumber, type FdMatch } from "@/lib/football";
 import { scoreEntry } from "@/lib/scoring";
 import type { GameweekStatus } from "@/lib/types";
 
@@ -16,14 +16,16 @@ export type SyncResult = {
  */
 export async function syncSeason(season: number): Promise<SyncResult> {
   const supabase = createServiceClient();
-  const matches = (await fetchPlMatches(season)).filter((m) => m.matchday != null);
+  const matches = (await fetchMatches(season)).filter((m) => roundNumber(m) != null);
 
-  // 1. Group by matchday and upsert gameweeks (deadline = earliest kickoff).
+  // 1. Group by round (matchday, or cup stage) and upsert gameweeks
+  //    (deadline = earliest kickoff in the round).
   const byMatchday = new Map<number, FdMatch[]>();
   for (const m of matches) {
-    const list = byMatchday.get(m.matchday!) ?? [];
+    const round = roundNumber(m)!;
+    const list = byMatchday.get(round) ?? [];
     list.push(m);
-    byMatchday.set(m.matchday!, list);
+    byMatchday.set(round, list);
   }
 
   const gwRows = [...byMatchday.entries()].map(([number, ms]) => {
@@ -58,7 +60,7 @@ export async function syncSeason(season: number): Promise<SyncResult> {
   // 2. Upsert fixtures by external_id (preserves existing ids + reserved flags).
   const fixtureRows = matches.map((m) => ({
     external_id: m.id,
-    gameweek_id: gwId.get(m.matchday!)!,
+    gameweek_id: gwId.get(roundNumber(m)!)!,
     home_team: m.homeTeam.shortName || m.homeTeam.name,
     away_team: m.awayTeam.shortName || m.awayTeam.name,
     home_crest: m.homeTeam.crest ?? null,
