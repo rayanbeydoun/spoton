@@ -4,11 +4,14 @@ import { useActionState } from "react";
 import { savePredictionsAction, type FormState } from "@/app/actions";
 import { SubmitButton } from "./SubmitButton";
 import { LocalTime } from "./LocalTime";
+import { TeamBadge } from "./TeamBadge";
 
 export type FixtureVM = {
   id: string;
   home_team: string;
   away_team: string;
+  home_crest: string | null;
+  away_crest: string | null;
   kickoff: string;
   kickoffLabel: string;
   home: number | null;
@@ -41,8 +44,9 @@ export function PredictionForm({
               <LocalTime iso={f.kickoff} fallback={f.kickoffLabel} withZone />
             </p>
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex-1 text-right text-sm font-semibold sm:text-base">
-                {f.home_team}
+              <div className="flex flex-1 items-center justify-end gap-2 text-right text-sm font-semibold sm:text-base">
+                <span>{f.home_team}</span>
+                <TeamBadge src={f.home_crest} alt={f.home_team} />
               </div>
               <input
                 name={`home_${f.id}`}
@@ -65,8 +69,9 @@ export function PredictionForm({
                 className="input w-14 px-0 text-center"
                 aria-label={`${f.away_team} goals`}
               />
-              <div className="flex-1 text-left text-sm font-semibold sm:text-base">
-                {f.away_team}
+              <div className="flex flex-1 items-center gap-2 text-left text-sm font-semibold sm:text-base">
+                <TeamBadge src={f.away_crest} alt={f.away_team} />
+                <span>{f.away_team}</span>
               </div>
             </div>
           </li>

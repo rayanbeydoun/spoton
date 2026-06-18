@@ -58,6 +58,8 @@ export default async function PredictPage({
     id: f.id,
     home_team: f.home_team,
     away_team: f.away_team,
+    home_crest: f.home_crest,
+    away_crest: f.away_crest,
     kickoff: f.kickoff,
     kickoffLabel: fmtDateTime(f.kickoff),
     home: predByFixture.get(f.id)?.home_pred ?? null,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LocalTime } from "@/components/LocalTime";
+import { TeamBadge } from "@/components/TeamBadge";
 import { fmtDateTime } from "@/lib/format";
 import { isLocked, type Fixture, type Gameweek, type Prediction } from "@/lib/types";
 
@@ -128,8 +129,12 @@ export default async function ReviewPage({
               return (
                 <tr key={f.id} className="border-t border-border/60">
                   <td className="sticky left-0 bg-surface px-4 py-3">
-                    <div className="font-semibold">
-                      {f.home_team} v {f.away_team}
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      <TeamBadge src={f.home_crest} alt={f.home_team} size={18} />
+                      <span>{f.home_team}</span>
+                      <span className="text-muted">v</span>
+                      <TeamBadge src={f.away_crest} alt={f.away_team} size={18} />
+                      <span>{f.away_team}</span>
                     </div>
                     <div className="text-xs text-muted">
                       {hasResult
