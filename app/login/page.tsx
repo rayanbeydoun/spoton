@@ -78,7 +78,7 @@ export default function LoginPage() {
         ) : (
           <>
             <p className="mt-1 text-sm text-muted">
-              Enter the 6-digit code we sent to{" "}
+              Enter the code we sent to{" "}
               <span className="text-foreground">{email}</span>.
             </p>
             <form onSubmit={verifyCode} className="mt-6 space-y-4">
@@ -92,9 +92,9 @@ export default function LoginPage() {
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   required
-                  className="input text-center text-2xl tracking-[0.4em]"
-                  placeholder="000000"
-                  maxLength={6}
+                  className="input text-center text-2xl tracking-[0.3em]"
+                  placeholder="00000000"
+                  maxLength={10}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                 />
