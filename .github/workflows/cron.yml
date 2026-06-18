@@ -1,0 +1,26 @@
+name: SpotOn scheduler
+
+# Runs the fixture/result sync and the prediction reminders on a schedule.
+# Vercel's free plan only allows once-a-day cron, so we drive them from here
+# instead (free). Set two repo secrets under Settings -> Secrets and variables
+# -> Actions:
+#   APP_URL      e.g. https://your-app.vercel.app   (no trailing slash)
+#   CRON_SECRET  the same value as in your Vercel env vars
+
+on:
+  schedule:
+    - cron: "*/15 * * * *" # every 15 minutes (UTC)
+  workflow_dispatch: {} # lets you run it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync fixtures & results
+        run: |
+          curl -fsS -m 60 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/sync" || true
+      - name: Send due reminders
+        run: |
+          curl -fsS -m 60 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/reminders" || true

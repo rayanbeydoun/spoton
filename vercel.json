@@ -1,0 +1,9 @@
+{
+  "$comment": "Vercel's free plan runs cron at most once a day; this daily sync is a safety-net backup. The real frequency (every 15 min) comes from .github/workflows/cron.yml.",
+  "crons": [
+    {
+      "path": "/api/cron/sync",
+      "schedule": "0 5 * * *"
+    }
+  ]
+}
