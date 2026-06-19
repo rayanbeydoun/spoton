@@ -110,12 +110,15 @@ export default async function ReviewPage({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="text-muted">
-              <th className="sticky left-0 bg-surface px-4 py-3 text-left font-medium">
+              <th className="sticky left-0 z-10 w-40 max-w-[44vw] bg-surface px-3 py-3 text-left font-medium">
                 Fixture
               </th>
               {members.map((m) => (
-                <th key={m.user_id} className="px-3 py-3 text-center font-medium">
-                  {m.name}
+                <th
+                  key={m.user_id}
+                  className="w-16 px-2 py-3 text-center font-medium"
+                >
+                  <span className="block max-w-16 truncate">{m.name}</span>
                   {m.user_id === user.id && (
                     <span className="block text-[10px] text-muted">(you)</span>
                   )}
@@ -128,17 +131,24 @@ export default async function ReviewPage({
               const hasResult = f.home_score != null && f.away_score != null;
               return (
                 <tr key={f.id} className="border-t border-border/60">
-                  <td className="sticky left-0 bg-surface px-4 py-3">
-                    <div className="flex items-center gap-1.5 font-semibold">
-                      <TeamBadge src={f.home_crest} alt={f.home_team} size={18} />
-                      <span>{f.home_team}</span>
-                      <span className="text-muted">v</span>
-                      <TeamBadge src={f.away_crest} alt={f.away_team} size={18} />
-                      <span>{f.away_team}</span>
+                  <td className="sticky left-0 z-10 w-40 max-w-[44vw] bg-surface px-3 py-3">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <TeamBadge src={f.home_crest} alt={f.home_team} size={16} />
+                        <span className="min-w-0 flex-1 truncate font-semibold">
+                          {f.home_team}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <TeamBadge src={f.away_crest} alt={f.away_team} size={16} />
+                        <span className="min-w-0 flex-1 truncate font-semibold">
+                          {f.away_team}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-xs text-muted">
+                    <div className="mt-1.5 text-xs text-muted">
                       {hasResult
-                        ? `Result ${f.home_score}–${f.away_score}`
+                        ? `FT ${f.home_score}–${f.away_score}`
                         : f.status === "postponed"
                           ? "Postponed"
                           : "Not played yet"}
@@ -147,7 +157,7 @@ export default async function ReviewPage({
                   {members.map((m) => {
                     const p = cell.get(f.id)?.get(m.user_id);
                     return (
-                      <td key={m.user_id} className="px-3 py-3 text-center">
+                      <td key={m.user_id} className="w-16 px-2 py-3 text-center">
                         {p ? (
                           <div>
                             <div className="font-mono">
@@ -169,11 +179,14 @@ export default async function ReviewPage({
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-border bg-surface-2/40 font-bold">
-              <td className="sticky left-0 bg-surface-2/40 px-4 py-3 text-left">
-                Gameweek points
+              <td className="sticky left-0 z-10 w-40 max-w-[44vw] bg-surface-2/40 px-3 py-3 text-left">
+                GW points
               </td>
               {members.map((m) => (
-                <td key={m.user_id} className="px-3 py-3 text-center text-accent">
+                <td
+                  key={m.user_id}
+                  className="w-16 px-2 py-3 text-center text-accent"
+                >
                   {totals.get(m.user_id) ?? 0}
                 </td>
               ))}
