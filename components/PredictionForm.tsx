@@ -40,38 +40,41 @@ export function PredictionForm({
       <ul className="space-y-2">
         {fixtures.map((f) => (
           <li key={f.id} className="card py-3">
-            <p className="mb-2 text-center text-xs text-muted">
+            <p className="mb-3 text-center text-xs text-muted">
               <LocalTime iso={f.kickoff} fallback={f.kickoffLabel} withZone />
             </p>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex flex-1 items-center justify-end gap-2 text-right text-sm font-semibold sm:text-base">
-                <span>{f.home_team}</span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5">
                 <TeamBadge src={f.home_crest} alt={f.home_team} />
+                <span className="min-w-0 flex-1 truncate font-semibold">
+                  {f.home_team}
+                </span>
+                <input
+                  name={`home_${f.id}`}
+                  type="number"
+                  min={0}
+                  max={99}
+                  inputMode="numeric"
+                  defaultValue={f.home ?? ""}
+                  className="input w-14 shrink-0 px-0 text-center"
+                  aria-label={`${f.home_team} goals`}
+                />
               </div>
-              <input
-                name={`home_${f.id}`}
-                type="number"
-                min={0}
-                max={99}
-                inputMode="numeric"
-                defaultValue={f.home ?? ""}
-                className="input w-14 px-0 text-center"
-                aria-label={`${f.home_team} goals`}
-              />
-              <span className="text-muted">–</span>
-              <input
-                name={`away_${f.id}`}
-                type="number"
-                min={0}
-                max={99}
-                inputMode="numeric"
-                defaultValue={f.away ?? ""}
-                className="input w-14 px-0 text-center"
-                aria-label={`${f.away_team} goals`}
-              />
-              <div className="flex flex-1 items-center gap-2 text-left text-sm font-semibold sm:text-base">
+              <div className="flex items-center gap-2.5">
                 <TeamBadge src={f.away_crest} alt={f.away_team} />
-                <span>{f.away_team}</span>
+                <span className="min-w-0 flex-1 truncate font-semibold">
+                  {f.away_team}
+                </span>
+                <input
+                  name={`away_${f.id}`}
+                  type="number"
+                  min={0}
+                  max={99}
+                  inputMode="numeric"
+                  defaultValue={f.away ?? ""}
+                  className="input w-14 shrink-0 px-0 text-center"
+                  aria-label={`${f.away_team} goals`}
+                />
               </div>
             </div>
           </li>

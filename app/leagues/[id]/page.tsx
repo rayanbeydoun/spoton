@@ -18,18 +18,16 @@ export default async function LeaguePage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: league } = await supabase
-    .from("leagues")
-    .select("*")
-    .eq("id", id)
-    .single();
+  // Fetch the league and its members together.
+  const [{ data: league }, { data: memberRows }] = await Promise.all([
+    supabase.from("leagues").select("*").eq("id", id).single(),
+    supabase
+      .from("league_members")
+      .select("user_id, role, profile:profiles(display_name)")
+      .eq("league_id", id),
+  ]);
   if (!league) notFound();
 
-  // Members + display names.
-  const { data: memberRows } = await supabase
-    .from("league_members")
-    .select("user_id, role, profile:profiles(display_name)")
-    .eq("league_id", id);
   const members = (memberRows ?? []).map((m) => ({
     user_id: m.user_id as string,
     role: m.role as string,
