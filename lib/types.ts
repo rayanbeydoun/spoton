@@ -1,7 +1,12 @@
 // Shared types mirroring the database schema (supabase/migrations/0001_init.sql).
 
 export type GameweekStatus = "upcoming" | "live" | "finished";
-export type FixtureStatus = "scheduled" | "live" | "finished" | "postponed";
+export type FixtureStatus =
+  | "scheduled"
+  | "live"
+  | "paused"
+  | "finished"
+  | "postponed";
 export type MemberRole = "owner" | "member";
 
 export type Profile = {

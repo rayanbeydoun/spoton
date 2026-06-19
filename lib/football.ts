@@ -71,8 +71,9 @@ export function mapStatus(fd: string): FixtureStatus {
     case "AWARDED":
       return "finished";
     case "IN_PLAY":
-    case "PAUSED":
       return "live";
+    case "PAUSED":
+      return "paused"; // half-time
     case "POSTPONED":
     case "SUSPENDED":
     case "CANCELLED":

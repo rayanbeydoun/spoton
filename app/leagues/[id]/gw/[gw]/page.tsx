@@ -15,6 +15,30 @@ function pointsClass(p: number | null): string {
   return "text-muted/50";
 }
 
+function StatusLine({ f }: { f: Fixture }) {
+  const score =
+    f.home_score != null && f.away_score != null
+      ? ` ${f.home_score}–${f.away_score}`
+      : "";
+  switch (f.status) {
+    case "finished":
+      return <span className="text-muted">FT{score}</span>;
+    case "live":
+      return (
+        <span className="font-semibold text-primary">
+          <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary align-middle" />
+          Ongoing{score}
+        </span>
+      );
+    case "paused":
+      return <span className="font-semibold text-amber-400">HT{score}</span>;
+    case "postponed":
+      return <span className="text-muted">Postponed</span>;
+    default:
+      return <span className="text-muted">Not played yet</span>;
+  }
+}
+
 export default async function ReviewPage({
   params,
 }: {
@@ -128,7 +152,6 @@ export default async function ReviewPage({
           </thead>
           <tbody>
             {fixtures.map((f) => {
-              const hasResult = f.home_score != null && f.away_score != null;
               return (
                 <tr key={f.id} className="border-t border-border/60">
                   <td className="sticky left-0 z-10 w-40 max-w-[44vw] bg-surface px-3 py-3">
@@ -146,12 +169,8 @@ export default async function ReviewPage({
                         </span>
                       </div>
                     </div>
-                    <div className="mt-1.5 text-xs text-muted">
-                      {hasResult
-                        ? `FT ${f.home_score}–${f.away_score}`
-                        : f.status === "postponed"
-                          ? "Postponed"
-                          : "Not played yet"}
+                    <div className="mt-1.5 text-xs">
+                      <StatusLine f={f} />
                     </div>
                   </td>
                   {members.map((m) => {

@@ -5,7 +5,13 @@ import { updateFixtureAction, type FormState } from "@/app/actions";
 import type { FixtureStatus } from "@/lib/types";
 import { SubmitButton } from "./SubmitButton";
 
-const STATUSES: FixtureStatus[] = ["scheduled", "live", "finished", "postponed"];
+const STATUSES: FixtureStatus[] = [
+  "scheduled",
+  "live",
+  "paused",
+  "finished",
+  "postponed",
+];
 
 export function FixtureEditForm({
   fixture,

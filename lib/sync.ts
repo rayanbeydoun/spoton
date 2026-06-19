@@ -34,7 +34,9 @@ export async function syncSeason(season: number): Promise<SyncResult> {
       ms[0].utcDate,
     );
     const statuses = ms.map((m) => mapStatus(m.status));
-    const status: GameweekStatus = statuses.some((s) => s === "live")
+    const status: GameweekStatus = statuses.some(
+      (s) => s === "live" || s === "paused",
+    )
       ? "live"
       : statuses.every((s) => s === "finished" || s === "postponed")
         ? "finished"
