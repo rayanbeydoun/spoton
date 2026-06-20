@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CreateLeagueForm } from "@/components/CreateLeagueForm";
 import { JoinLeagueForm } from "@/components/JoinLeagueForm";
 import { EnableNotifications } from "@/components/EnableNotifications";
-import { seasonLabel } from "@/lib/format";
+import { competitionLabel } from "@/lib/format";
 import type { League } from "@/lib/types";
 
 export default async function DashboardPage() {
@@ -22,7 +22,7 @@ export default async function DashboardPage() {
 
   const { data: memberships } = await supabase
     .from("league_members")
-    .select("role, league:leagues(id, name, invite_code, season)")
+    .select("role, league:leagues(id, name, invite_code, season, competition)")
     .eq("user_id", user.id)
     .order("joined_at", { ascending: true });
 
@@ -54,7 +54,7 @@ export default async function DashboardPage() {
               <div className="flex items-start justify-between">
                 <h2 className="text-lg font-bold">{l.name}</h2>
                 <span className="badge bg-surface-2 text-muted">
-                  {seasonLabel(l.season)}
+                  {competitionLabel(l.competition, l.season)}
                 </span>
               </div>
               <p className="mt-2 text-sm text-muted">

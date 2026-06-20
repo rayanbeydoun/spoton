@@ -21,6 +21,7 @@ export type League = {
   invite_code: string;
   owner_id: string;
   season: number;
+  competition: string;
   created_at: string;
 };
 
@@ -34,6 +35,7 @@ export type LeagueMember = {
 export type Gameweek = {
   id: string;
   season: number;
+  competition: string;
   number: number;
   deadline: string | null;
   status: GameweekStatus;

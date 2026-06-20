@@ -20,17 +20,24 @@ export type FdMatch = {
   score: { fullTime: { home: number | null; away: number | null } };
 };
 
-export function competitionCode(): string {
-  return process.env.FOOTBALL_COMPETITION || "PL";
+/** Competitions to sync, from FOOTBALL_COMPETITION (comma-separated, e.g. "WC,PL"). */
+export function competitions(): string[] {
+  return (process.env.FOOTBALL_COMPETITION || "PL")
+    .split(",")
+    .map((c) => c.trim().toUpperCase())
+    .filter(Boolean);
 }
 
 /** Fetch every match for a competition + season (e.g. 2025 => 2025/26 for PL). */
-export async function fetchMatches(season: number): Promise<FdMatch[]> {
+export async function fetchMatches(
+  season: number,
+  competition: string,
+): Promise<FdMatch[]> {
   const key = process.env.FOOTBALL_DATA_API_KEY;
   if (!key) throw new Error("FOOTBALL_DATA_API_KEY is not set");
 
   const res = await fetch(
-    `${BASE}/competitions/${competitionCode()}/matches?season=${season}`,
+    `${BASE}/competitions/${competition}/matches?season=${season}`,
     { headers: { "X-Auth-Token": key }, cache: "no-store" },
   );
 

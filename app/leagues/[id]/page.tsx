@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CopyInvite } from "@/components/CopyInvite";
 import { LocalTime } from "@/components/LocalTime";
 import { Countdown } from "@/components/Countdown";
-import { fmtDateTime, seasonLabel } from "@/lib/format";
+import { competitionLabel, fmtDateTime } from "@/lib/format";
 import { isLocked, type Gameweek } from "@/lib/types";
 
 export default async function LeaguePage({
@@ -41,6 +41,7 @@ export default async function LeaguePage({
     .from("gameweeks")
     .select("*")
     .eq("season", league.season)
+    .eq("competition", league.competition)
     .order("number", { ascending: true });
   const gameweeks = (gwData ?? []) as Gameweek[];
   const gwIds = gameweeks.map((g) => g.id);
@@ -102,7 +103,9 @@ export default async function LeaguePage({
             ← My leagues
           </Link>
           <h1 className="text-2xl font-extrabold">{league.name}</h1>
-          <p className="text-muted">Season {seasonLabel(league.season)}</p>
+          <p className="text-muted">
+            {competitionLabel(league.competition, league.season)}
+          </p>
         </div>
         <div className="text-right">
           <p className="mb-1 text-xs text-muted">Invite friends</p>
@@ -186,7 +189,8 @@ export default async function LeaguePage({
         <h2 className="mb-3 text-lg font-bold">Gameweeks</h2>
         {gameweeks.length === 0 ? (
           <div className="card text-muted">
-            No fixtures loaded yet for {seasonLabel(league.season)}. Once the schedule
+            No fixtures loaded yet for{" "}
+            {competitionLabel(league.competition, league.season)}. Once the schedule
             is released, an admin syncs it and gameweeks appear here.
           </div>
         ) : (

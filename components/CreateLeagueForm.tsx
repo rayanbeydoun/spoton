@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createLeagueAction, type FormState } from "@/app/actions";
+import { COMPETITIONS } from "@/lib/format";
 import { SubmitButton } from "./SubmitButton";
 
 export function CreateLeagueForm({ season }: { season: number }) {
@@ -13,6 +14,18 @@ export function CreateLeagueForm({ season }: { season: number }) {
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="season" value={season} />
+      <div>
+        <label className="label" htmlFor="league-competition">
+          Competition
+        </label>
+        <select id="league-competition" name="competition" className="input" defaultValue="PL">
+          {COMPETITIONS.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <div>
         <label className="label" htmlFor="league-name">
           League name

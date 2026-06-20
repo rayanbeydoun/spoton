@@ -24,12 +24,14 @@ export async function createLeagueAction(
   try {
     const name = String(formData.get("name") ?? "").trim();
     const season = Number(formData.get("season") ?? defaultSeason());
+    const competition = String(formData.get("competition") ?? "PL").toUpperCase();
     if (!name) return { error: "Please enter a league name." };
 
     const supabase = await createClient();
     const { data, error } = await supabase.rpc("create_league", {
       p_name: name,
       p_season: season,
+      p_competition: competition,
     });
     if (error) return { error: error.message };
     leagueId = data.id;
