@@ -39,7 +39,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
-        <header className="border-b border-border/70 bg-background/60 backdrop-blur sticky top-0 z-20">
+        <header className="pt-safe border-b border-border/70 bg-background/60 backdrop-blur sticky top-0 z-20">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
             <Link href="/" className="flex items-center" aria-label="SpotOn home">
               <Logo className="h-7" />
