@@ -84,6 +84,19 @@ model.**
 - Export and place in `public/` (logo SVG/PNG; regenerate `icon-192/512/maskable`,
   `apple-touch-icon`). Update `app/manifest.ts` + `app/layout.tsx` references.
 
+## Notifications fix (bug found during design)
+
+Push reminders never worked on mobile because the `push_subscriptions` table and the
+`gameweeks.reminder_3h_sent/1h_sent` columns were never created (migration 0002 wasn't run),
+so "Enable reminders" silently failed to save the subscription.
+
+- **Done:** applied the missing schema directly to the live DB (table + RLS + columns).
+- **To build:** on successful subscribe, the server sends an **immediate confirmation push**
+  ("🔔 Reminders on — we'll nudge you before each deadline.") so users get instant proof it
+  works. Implement as a small `sendTestPush` path in `app/api/push/route.ts` (POST) using the
+  existing `sendPush` helper; ignore failures so saving still succeeds.
+- Surface clearer status in `EnableNotifications` (e.g. "Sending test…" → "✓ Reminders on").
+
 ## Accessibility
 
 - Maintain contrast on the darker palette; visible focus rings; tab bar items have
