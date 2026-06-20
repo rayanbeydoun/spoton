@@ -103,7 +103,7 @@ export function EnableNotifications() {
         <h3 className="font-bold">🔔 Prediction reminders</h3>
         <p className="text-sm text-muted">
           {status === "subscribed"
-            ? "On — we'll ping this device 3 hours and 1 hour before each deadline."
+            ? "On ✓ — we sent a test notification to this device. You'll get a nudge 3h and 1h before each deadline."
             : status === "denied"
               ? "Notifications are blocked. Enable them for this site in your browser settings."
               : status === "ios-install"

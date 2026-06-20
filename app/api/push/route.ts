@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendPush } from "@/lib/push";
 
 /** Save (or refresh) the current user's push subscription. */
 export async function POST(request: Request) {
@@ -26,6 +27,20 @@ export async function POST(request: Request) {
     { onConflict: "endpoint" },
   );
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Immediate confirmation so the user knows reminders actually work.
+  try {
+    await sendPush(
+      { endpoint: sub.endpoint, p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+      {
+        title: "🔔 Reminders on!",
+        body: "We'll nudge you 3 hours and 1 hour before each deadline.",
+        url: "/",
+      },
+    );
+  } catch {
+    // Confirmation is best-effort; saving the subscription already succeeded.
+  }
 
   return NextResponse.json({ ok: true });
 }
