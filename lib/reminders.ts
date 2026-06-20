@@ -124,3 +124,136 @@ async function remindGameweek(
   }
   return sent;
 }
+
+type Supa = ReturnType<typeof createServiceClient>;
+
+/** Push to everyone who plays in this season and has notifications enabled. */
+async function pushToSeasonMembers(
+  supabase: Supa,
+  season: number,
+  payload: { title: string; body: string; url: string; tag: string },
+): Promise<number> {
+  const { data: leagues } = await supabase
+    .from("leagues")
+    .select("id")
+    .eq("season", season);
+  const leagueIds = (leagues ?? []).map((l) => l.id);
+  if (!leagueIds.length) return 0;
+
+  const { data: memberRows } = await supabase
+    .from("league_members")
+    .select("user_id")
+    .in("league_id", leagueIds);
+  const memberIds = [...new Set((memberRows ?? []).map((m) => m.user_id as string))];
+  if (!memberIds.length) return 0;
+
+  const { data: subs } = await supabase
+    .from("push_subscriptions")
+    .select("*")
+    .in("user_id", memberIds);
+
+  let sent = 0;
+  for (const s of subs ?? []) {
+    const res = await sendPush(
+      { endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth },
+      payload,
+    );
+    if (res.ok) sent++;
+    else if (res.gone) await supabase.from("push_subscriptions").delete().eq("id", s.id);
+  }
+  return sent;
+}
+
+export type ResultNotifyResult = { gameweeksDone: number; matchDaysDone: number };
+
+/**
+ * Sends "results are in" pushes: once when a whole match-day's games finish (only
+ * for recent days, so we never backfill history), and once when an entire
+ * gameweek finishes. Both are deduped so they fire exactly once.
+ */
+export async function sendResultNotifications(
+  season: number,
+): Promise<ResultNotifyResult> {
+  const supabase = createServiceClient();
+  let gameweeksDone = 0;
+  let matchDaysDone = 0;
+
+  // 1. Gameweek complete -> notify once (results_notified flag).
+  const { data: pendingGws } = await supabase
+    .from("gameweeks")
+    .select("id, number")
+    .eq("season", season)
+    .eq("results_notified", false);
+
+  for (const gw of pendingGws ?? []) {
+    const { data: fx } = await supabase
+      .from("fixtures")
+      .select("status")
+      .eq("gameweek_id", gw.id);
+    const fixtures = fx ?? [];
+    if (!fixtures.length) continue;
+    const allDone = fixtures.every(
+      (f) => f.status === "finished" || f.status === "postponed",
+    );
+    const anyFinished = fixtures.some((f) => f.status === "finished");
+    if (!allDone || !anyFinished) continue;
+
+    await pushToSeasonMembers(supabase, season, {
+      title: `🏁 Gameweek ${gw.number} is done`,
+      body: "All matches are in — see where you finished on the leaderboard.",
+      url: "/results",
+      tag: `gw-done-${gw.id}`,
+    });
+    await supabase.from("gameweeks").update({ results_notified: true }).eq("id", gw.id);
+    gameweeksDone++;
+  }
+
+  // 2. Match-day complete -> notify once per recent day.
+  const { data: gwRows } = await supabase
+    .from("gameweeks")
+    .select("id")
+    .eq("season", season);
+  const gwIds = (gwRows ?? []).map((g) => g.id);
+  if (gwIds.length) {
+    const { data: fixtures } = await supabase
+      .from("fixtures")
+      .select("kickoff, status")
+      .in("gameweek_id", gwIds);
+
+    const byDate = new Map<string, { total: number; finished: number; done: number }>();
+    for (const f of fixtures ?? []) {
+      const date = (f.kickoff as string).slice(0, 10);
+      const e = byDate.get(date) ?? { total: 0, finished: 0, done: 0 };
+      e.total++;
+      if (f.status === "finished") e.finished++;
+      if (f.status === "finished" || f.status === "postponed") e.done++;
+      byDate.set(date, e);
+    }
+
+    const now = Date.now();
+    const today = new Date(now).toISOString().slice(0, 10);
+    const yesterday = new Date(now - 86400000).toISOString().slice(0, 10);
+
+    for (const [date, e] of byDate) {
+      // Only fire for today/yesterday (avoid backfilling old completed days).
+      if (date !== today && date !== yesterday) continue;
+      if (e.total === 0 || e.done < e.total || e.finished === 0) continue;
+
+      const key = `day-${season}-${date}`;
+      const { error: insErr } = await supabase
+        .from("sent_notifications")
+        .insert({ key });
+      if (insErr) continue; // primary-key conflict => already sent
+
+      await pushToSeasonMembers(supabase, season, {
+        title: "📊 Today's results are in",
+        body: "Check your points and see how you did today.",
+        url: "/results",
+        tag: key,
+      });
+      matchDaysDone++;
+    }
+  }
+
+  return { gameweeksDone, matchDaysDone };
+}

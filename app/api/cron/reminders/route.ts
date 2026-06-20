@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendDueReminders } from "@/lib/reminders";
+import { sendDueReminders, sendResultNotifications } from "@/lib/reminders";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -17,8 +17,9 @@ export async function GET(request: Request) {
 
   const season = Number(process.env.NEXT_PUBLIC_DEFAULT_SEASON ?? 2025);
   try {
-    const r = await sendDueReminders(season);
-    return NextResponse.json({ ok: true, ...r });
+    const reminders = await sendDueReminders(season);
+    const results = await sendResultNotifications(season);
+    return NextResponse.json({ ok: true, ...reminders, ...results });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: (e as Error).message },
