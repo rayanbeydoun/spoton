@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Logo } from "@/components/Logo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -45,6 +46,9 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto max-w-md">
+      <div className="mb-6 flex justify-center pt-4">
+        <Logo className="h-10" />
+      </div>
       <div className="card">
         <h1 className="text-2xl font-extrabold">Sign in to SpotOn</h1>
 

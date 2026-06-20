@@ -5,6 +5,8 @@ import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { BottomNav } from "@/components/BottomNav";
+import { Logo } from "@/components/Logo";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -17,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1a0b2e",
+  themeColor: "#0e0a16",
 };
 
 export default async function RootLayout({
@@ -38,17 +40,12 @@ export default async function RootLayout({
         <ServiceWorkerRegister />
         <header className="border-b border-border/70 bg-background/60 backdrop-blur sticky top-0 z-20">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-            <Link href="/" className="flex items-center gap-2 font-extrabold tracking-tight">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-fg">
-                ⚽
-              </span>
-              <span className="text-lg">
-                Spot<span className="text-accent">On</span>
-              </span>
+            <Link href="/" className="flex items-center" aria-label="SpotOn home">
+              <Logo className="h-7" />
             </Link>
             <nav className="flex items-center gap-2 text-sm">
               {user ? (
-                <>
+                <div className="hidden items-center gap-2 sm:flex">
                   <Link href="/" className="btn-ghost px-3 py-1.5">
                     My Leagues
                   </Link>
@@ -57,12 +54,10 @@ export default async function RootLayout({
                       Admin
                     </Link>
                   )}
-                  <form action="/auth/signout" method="post">
-                    <button type="submit" className="btn-ghost px-3 py-1.5">
-                      Sign out
-                    </button>
-                  </form>
-                </>
+                  <Link href="/profile" className="btn-ghost px-3 py-1.5">
+                    Profile
+                  </Link>
+                </div>
               ) : (
                 <Link href="/login" className="btn-primary px-3 py-1.5">
                   Sign in
@@ -72,11 +67,15 @@ export default async function RootLayout({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-28 sm:py-8 sm:pb-10">
+          {children}
+        </main>
 
-        <footer className="border-t border-border/70 py-6 text-center text-xs text-muted">
-          SpotOn · a friendly Premier League prediction game
+        <footer className="hidden border-t border-border/70 py-6 text-center text-xs text-muted sm:block">
+          SpotOn · a friendly football prediction game
         </footer>
+
+        <BottomNav />
       </body>
     </html>
   );

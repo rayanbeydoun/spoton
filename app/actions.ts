@@ -174,3 +174,34 @@ export async function updateFixtureAction(
     return { error: (e as Error).message };
   }
 }
+
+// --- Profile ----------------------------------------------------------------
+
+export async function updateDisplayNameAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    const name = String(formData.get("display_name") ?? "").trim();
+    if (!name) return { error: "Please enter a name." };
+    if (name.length > 40) return { error: "Name must be 40 characters or fewer." };
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) redirect("/login");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: name })
+      .eq("id", user.id);
+    if (error) return { error: error.message };
+
+    revalidatePath("/profile");
+    revalidatePath("/");
+    return { ok: "Saved!" };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}

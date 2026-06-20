@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LocalTime } from "@/components/LocalTime";
 import { TeamBadge } from "@/components/TeamBadge";
+import { Confetti } from "@/components/Confetti";
 import { fmtDateTime } from "@/lib/format";
 import { isLocked, type Fixture, type Gameweek, type Prediction } from "@/lib/types";
 
@@ -110,8 +111,13 @@ export default async function ReviewPage({
     }
   }
 
+  const viewerGotExact = preds.some(
+    (p) => p.user_id === user.id && p.points === 5,
+  );
+
   return (
     <div className="space-y-6">
+      <Confetti trigger={viewerGotExact} />
       <div>
         <Link
           href={`/leagues/${id}`}
