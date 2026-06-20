@@ -10,9 +10,9 @@ export type UserGameweek = Gameweek & {
 };
 
 /**
- * Every gameweek relevant to the user (across the seasons of the leagues they're
- * in), annotated with a league for back-links, fixture count, how many they've
- * predicted, and whether it's locked.
+ * Every gameweek relevant to the user — the gameweeks of each (competition,
+ * season) they have a league for — annotated with a league for back-links,
+ * fixture count, how many they've predicted, and whether it's locked.
  */
 export async function getUserGameweeks(
   supabase: SupabaseClient,
@@ -20,26 +20,38 @@ export async function getUserGameweeks(
 ): Promise<UserGameweek[]> {
   const { data: memberships } = await supabase
     .from("league_members")
-    .select("league:leagues(id, name, season)")
+    .select("league:leagues(id, name, season, competition)")
     .eq("user_id", userId);
 
   const leagues = (memberships ?? [])
-    .map((m) => m.league as unknown as { id: string; name: string; season: number } | null)
-    .filter((l): l is { id: string; name: string; season: number } => l != null);
+    .map(
+      (m) =>
+        m.league as unknown as {
+          id: string;
+          name: string;
+          season: number;
+          competition: string;
+        } | null,
+    )
+    .filter((l): l is { id: string; name: string; season: number; competition: string } => l != null);
   if (!leagues.length) return [];
 
-  const seasonToLeague = new Map<number, { id: string; name: string }>();
+  // (competition|season) -> a league for back-links.
+  const pairToLeague = new Map<string, { id: string; name: string }>();
   for (const l of leagues) {
-    if (!seasonToLeague.has(l.season)) seasonToLeague.set(l.season, { id: l.id, name: l.name });
+    const key = `${l.competition}|${l.season}`;
+    if (!pairToLeague.has(key)) pairToLeague.set(key, { id: l.id, name: l.name });
   }
-  const seasons = [...seasonToLeague.keys()];
+  const seasons = [...new Set(leagues.map((l) => l.season))];
 
   const { data: gwData } = await supabase
     .from("gameweeks")
     .select("*")
     .in("season", seasons)
     .order("number", { ascending: true });
-  const gameweeks = (gwData ?? []) as Gameweek[];
+  const gameweeks = ((gwData ?? []) as Gameweek[]).filter((g) =>
+    pairToLeague.has(`${g.competition}|${g.season}`),
+  );
   const gwIds = gameweeks.map((g) => g.id);
   if (!gwIds.length) return [];
 
@@ -69,7 +81,7 @@ export async function getUserGameweeks(
   }
 
   return gameweeks.map((g) => {
-    const ctx = seasonToLeague.get(g.season)!;
+    const ctx = pairToLeague.get(`${g.competition}|${g.season}`)!;
     return {
       ...g,
       leagueId: ctx.id,

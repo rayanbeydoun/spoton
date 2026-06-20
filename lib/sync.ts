@@ -1,5 +1,11 @@
 import { createServiceClient } from "@/lib/supabase/admin";
-import { fetchMatches, mapStatus, roundNumber, type FdMatch } from "@/lib/football";
+import {
+  competitions,
+  fetchMatches,
+  mapStatus,
+  roundNumber,
+  type FdMatch,
+} from "@/lib/football";
 import { scoreEntry } from "@/lib/scoring";
 import type { GameweekStatus } from "@/lib/types";
 
@@ -10,13 +16,30 @@ export type SyncResult = {
 };
 
 /**
- * Pull the season's fixtures and results from football-data.org, upsert the
- * gameweeks and fixtures, then (re)score predictions for finished matches.
- * Runs with the service role, so it bypasses RLS. Safe to run repeatedly.
+ * Sync every configured competition (FOOTBALL_COMPETITION, e.g. "WC,PL") for the
+ * season, then (re)score predictions for finished matches. Runs with the service
+ * role, so it bypasses RLS. Safe to run repeatedly.
  */
 export async function syncSeason(season: number): Promise<SyncResult> {
+  let gameweeks = 0;
+  let fixtures = 0;
+  for (const competition of competitions()) {
+    const r = await syncCompetition(season, competition);
+    gameweeks += r.gameweeks;
+    fixtures += r.fixtures;
+  }
+  const scored = await scoreFinishedFixtures(season);
+  return { gameweeks, fixtures, scored };
+}
+
+async function syncCompetition(
+  season: number,
+  competition: string,
+): Promise<{ gameweeks: number; fixtures: number }> {
   const supabase = createServiceClient();
-  const matches = (await fetchMatches(season)).filter((m) => roundNumber(m) != null);
+  const matches = (await fetchMatches(season, competition)).filter(
+    (m) => roundNumber(m) != null,
+  );
 
   // 1. Group by round (matchday, or cup stage) and upsert gameweeks
   //    (deadline = earliest kickoff in the round).
@@ -41,21 +64,22 @@ export async function syncSeason(season: number): Promise<SyncResult> {
       : statuses.every((s) => s === "finished" || s === "postponed")
         ? "finished"
         : "upcoming";
-    return { season, number, deadline, status };
+    return { season, competition, number, deadline, status };
   });
 
   if (gwRows.length) {
     const { error } = await supabase
       .from("gameweeks")
-      .upsert(gwRows, { onConflict: "season,number" });
+      .upsert(gwRows, { onConflict: "competition,season,number" });
     if (error) throw new Error(`gameweeks upsert: ${error.message}`);
   }
 
-  // Resolve matchday -> gameweek id for fixture rows.
+  // Resolve round number -> gameweek id for fixture rows.
   const { data: gws, error: gwErr } = await supabase
     .from("gameweeks")
     .select("id, number")
-    .eq("season", season);
+    .eq("season", season)
+    .eq("competition", competition);
   if (gwErr) throw new Error(`gameweeks read: ${gwErr.message}`);
   const gwId = new Map<number, string>((gws ?? []).map((g) => [g.number, g.id]));
 
@@ -81,10 +105,7 @@ export async function syncSeason(season: number): Promise<SyncResult> {
     if (error) throw new Error(`fixtures upsert: ${error.message}`);
   }
 
-  // 3. Score predictions for finished fixtures.
-  const scored = await scoreFinishedFixtures(season);
-
-  return { gameweeks: gwRows.length, fixtures: fixtureRows.length, scored };
+  return { gameweeks: gwRows.length, fixtures: fixtureRows.length };
 }
 
 /**
