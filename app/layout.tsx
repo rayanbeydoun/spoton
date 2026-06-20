@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { BottomNav } from "@/components/BottomNav";
+import { Logo } from "@/components/Logo";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -39,13 +40,8 @@ export default async function RootLayout({
         <ServiceWorkerRegister />
         <header className="border-b border-border/70 bg-background/60 backdrop-blur sticky top-0 z-20">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-            <Link href="/" className="flex items-center gap-2 font-extrabold tracking-tight">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-fg">
-                ⚽
-              </span>
-              <span className="text-lg">
-                Spot<span className="text-accent">On</span>
-              </span>
+            <Link href="/" className="flex items-center" aria-label="SpotOn home">
+              <Logo className="h-7" />
             </Link>
             <nav className="flex items-center gap-2 text-sm">
               {user ? (
