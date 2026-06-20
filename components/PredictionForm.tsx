@@ -45,7 +45,7 @@ export function PredictionForm({
             </p>
             <div className="space-y-2">
               <div className="flex items-center gap-2.5">
-                <TeamBadge src={f.home_crest} alt={f.home_team} />
+                <TeamBadge src={f.home_crest} alt={f.home_team} size={26} />
                 <span className="min-w-0 flex-1 truncate font-semibold">
                   {f.home_team}
                 </span>
@@ -56,12 +56,12 @@ export function PredictionForm({
                   max={99}
                   inputMode="numeric"
                   defaultValue={f.home ?? ""}
-                  className="input w-14 shrink-0 px-0 text-center"
+                  className="input tnum w-14 shrink-0 px-0 text-center text-lg"
                   aria-label={`${f.home_team} goals`}
                 />
               </div>
               <div className="flex items-center gap-2.5">
-                <TeamBadge src={f.away_crest} alt={f.away_team} />
+                <TeamBadge src={f.away_crest} alt={f.away_team} size={26} />
                 <span className="min-w-0 flex-1 truncate font-semibold">
                   {f.away_team}
                 </span>
@@ -72,7 +72,7 @@ export function PredictionForm({
                   max={99}
                   inputMode="numeric"
                   defaultValue={f.away ?? ""}
-                  className="input w-14 shrink-0 px-0 text-center"
+                  className="input tnum w-14 shrink-0 px-0 text-center text-lg"
                   aria-label={`${f.away_team} goals`}
                 />
               </div>
@@ -81,10 +81,18 @@ export function PredictionForm({
         ))}
       </ul>
 
-      {state?.error && <p className="text-sm text-primary">{state.error}</p>}
-
-      <div className="flex justify-end">
-        <SubmitButton pendingText="Saving…">Save predictions</SubmitButton>
+      <div className="sticky bottom-20 z-10 sm:bottom-4">
+        {state?.error && (
+          <p className="mb-2 rounded-lg bg-surface px-3 py-2 text-sm text-primary shadow-lg">
+            {state.error}
+          </p>
+        )}
+        <SubmitButton
+          className="btn-accent w-full shadow-xl shadow-black/40"
+          pendingText="Saving…"
+        >
+          Save predictions
+        </SubmitButton>
       </div>
     </form>
   );
