@@ -20,12 +20,17 @@ export type FdMatch = {
   score: { fullTime: { home: number | null; away: number | null } };
 };
 
-/** Competitions to sync, from FOOTBALL_COMPETITION (comma-separated, e.g. "WC,PL"). */
+/**
+ * Competitions to sync — config as code, so changing it ships with a deploy
+ * instead of needing a dashboard env edit. Add a code (e.g. "WC") to this list to
+ * run another competition alongside the Premier League.
+ *
+ * Note: the old FOOTBALL_COMPETITION env var is no longer read.
+ */
+export const SYNCED_COMPETITIONS: string[] = ["PL"];
+
 export function competitions(): string[] {
-  return (process.env.FOOTBALL_COMPETITION || "PL")
-    .split(",")
-    .map((c) => c.trim().toUpperCase())
-    .filter(Boolean);
+  return [...SYNCED_COMPETITIONS];
 }
 
 /** Fetch every match for a competition + season (e.g. 2025 => 2025/26 for PL). */
