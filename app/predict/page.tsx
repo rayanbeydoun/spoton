@@ -12,9 +12,13 @@ export default async function PredictIndexPage() {
   if (!user) redirect("/login");
 
   const all = await getUserGameweeks(supabase, user.id);
-  const open = all
+  const openAll = all
     .filter((g) => !g.locked && g.total > 0)
     .sort((a, b) => (a.deadline ?? "").localeCompare(b.deadline ?? ""));
+  // A full league season is 38 gameweeks — only surface the next few.
+  const UPCOMING_LIMIT = 5;
+  const open = openAll.slice(0, UPCOMING_LIMIT);
+  const hiddenCount = openAll.length - open.length;
 
   return (
     <div className="space-y-5">
@@ -59,6 +63,13 @@ export default async function PredictIndexPage() {
             );
           })}
         </ul>
+      )}
+
+      {hiddenCount > 0 && (
+        <p className="text-center text-xs text-muted">
+          Showing the next {open.length} gameweeks · {hiddenCount} more later in the
+          season
+        </p>
       )}
     </div>
   );
