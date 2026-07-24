@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ChevronDown, Trophy, Medal } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LocalTime } from "@/components/LocalTime";
 import { TeamBadge } from "@/components/TeamBadge";
@@ -16,23 +17,20 @@ function pointsClass(p: number | null): string {
   return "text-muted/50";
 }
 
+/** Live/finished state for a fixture (score is shown separately). */
 function StatusLine({ f }: { f: Fixture }) {
-  const score =
-    f.home_score != null && f.away_score != null
-      ? ` ${f.home_score}–${f.away_score}`
-      : "";
   switch (f.status) {
     case "finished":
-      return <span className="text-muted">FT{score}</span>;
+      return <span className="text-muted">FT</span>;
     case "live":
       return (
         <span className="font-semibold text-primary">
           <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary align-middle" />
-          Ongoing{score}
+          Ongoing
         </span>
       );
     case "paused":
-      return <span className="font-semibold text-amber-400">HT{score}</span>;
+      return <span className="font-semibold text-amber-400">HT</span>;
     case "postponed":
       return <span className="text-muted">Postponed</span>;
     default:
@@ -90,10 +88,7 @@ export default async function ReviewPage({
   const fixtureIds = fixtures.map((f) => f.id);
 
   const { data: predData } = fixtureIds.length
-    ? await supabase
-        .from("predictions")
-        .select("*")
-        .in("fixture_id", fixtureIds)
+    ? await supabase.from("predictions").select("*").in("fixture_id", fixtureIds)
     : { data: [] as Prediction[] };
   const preds = (predData ?? []) as Prediction[];
 
@@ -111,13 +106,16 @@ export default async function ReviewPage({
     }
   }
 
-  const viewerGotExact = preds.some(
-    (p) => p.user_id === user.id && p.points === 5,
-  );
+  const standings = members
+    .map((m) => ({ ...m, points: totals.get(m.user_id) ?? 0 }))
+    .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+
+  const viewerGotExact = preds.some((p) => p.user_id === user.id && p.points === 5);
 
   return (
     <div className="space-y-6">
       <Confetti trigger={viewerGotExact} />
+
       <div>
         <Link
           href={`/leagues/${id}`}
@@ -125,7 +123,7 @@ export default async function ReviewPage({
         >
           ← {league.name}
         </Link>
-        <h1 className="text-2xl font-extrabold">Gameweek {gameweek.number} results</h1>
+        <h1 className="text-2xl font-extrabold">Gameweek {gameweek.number}</h1>
         <p className="text-muted">
           Locked{" "}
           {gameweek.deadline ? (
@@ -136,89 +134,146 @@ export default async function ReviewPage({
         </p>
       </div>
 
-      <div className="card overflow-x-auto p-0">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="text-muted">
-              <th className="sticky left-0 z-10 w-40 max-w-[44vw] bg-surface px-3 py-3 text-left font-medium">
-                Fixture
-              </th>
-              {members.map((m) => (
-                <th
-                  key={m.user_id}
-                  className="w-16 px-2 py-3 text-center font-medium"
-                >
-                  <span className="block max-w-16 truncate">{m.name}</span>
-                  {m.user_id === user.id && (
-                    <span className="block text-[10px] text-muted">(you)</span>
+      {/* Gameweek standings */}
+      <section className="card overflow-hidden p-0">
+        <h2 className="border-b border-border/70 px-5 py-3 text-lg font-bold">
+          Gameweek points
+        </h2>
+        <ul>
+          {standings.map((row, i) => {
+            const me = row.user_id === user.id;
+            return (
+              <li
+                key={row.user_id}
+                className={`flex items-center gap-3 border-t border-border/50 px-5 py-2.5 ${
+                  me ? "bg-surface-2/50" : ""
+                }`}
+              >
+                <span className="flex w-6 shrink-0 justify-center">
+                  {i === 0 ? (
+                    <Trophy size={16} className="text-gold" aria-label="1st" />
+                  ) : i === 1 ? (
+                    <Medal size={16} className="text-silver" aria-label="2nd" />
+                  ) : i === 2 ? (
+                    <Medal size={16} className="text-bronze" aria-label="3rd" />
+                  ) : (
+                    <span className="tnum text-sm text-muted">{i + 1}</span>
                   )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {fixtures.map((f) => {
-              return (
-                <tr key={f.id} className="border-t border-border/60">
-                  <td className="sticky left-0 z-10 w-40 max-w-[44vw] bg-surface px-3 py-3">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5">
-                        <TeamBadge src={f.home_crest} alt={f.home_team} size={16} />
-                        <span className="min-w-0 flex-1 truncate font-semibold">
-                          {f.home_team}
+                </span>
+                <span className="min-w-0 flex-1 truncate font-semibold">
+                  {row.name}
+                  {me && <span className="ml-2 text-xs font-normal text-muted">you</span>}
+                </span>
+                <span className="tnum font-bold text-accent">{row.points}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      {/* Matches — tap to reveal everyone's picks (scales to any group size) */}
+      <section className="space-y-2">
+        <h2 className="text-lg font-bold">Matches</h2>
+        <p className="text-xs text-muted">Tap a match to see everyone&apos;s picks.</p>
+
+        {fixtures.map((f) => {
+          const hasResult = f.home_score != null && f.away_score != null;
+          const mine = cell.get(f.id)?.get(user.id) ?? null;
+
+          const rows = members
+            .map((m) => {
+              const p = cell.get(f.id)?.get(m.user_id) ?? null;
+              return {
+                user_id: m.user_id,
+                name: m.name,
+                pred: p,
+                points: p?.points ?? null,
+                me: m.user_id === user.id,
+              };
+            })
+            .sort(
+              (a, b) =>
+                (b.points ?? -1) - (a.points ?? -1) || a.name.localeCompare(b.name),
+            );
+
+          return (
+            <details key={f.id} className="card group py-3">
+              <summary className="flex cursor-pointer list-none select-none flex-col gap-2 [&::-webkit-details-marker]:hidden">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <TeamBadge src={f.home_crest} alt={f.home_team} size={20} />
+                    <span className="min-w-0 flex-1 truncate font-semibold">
+                      {f.home_team}
+                    </span>
+                    <span className="tnum text-lg font-bold">
+                      {hasResult ? f.home_score : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TeamBadge src={f.away_crest} alt={f.away_team} size={20} />
+                    <span className="min-w-0 flex-1 truncate font-semibold">
+                      {f.away_team}
+                    </span>
+                    <span className="tnum text-lg font-bold">
+                      {hasResult ? f.away_score : ""}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <StatusLine f={f} />
+                  <span className="flex items-center gap-1.5 text-muted">
+                    {mine ? (
+                      <>
+                        <span>
+                          you{" "}
+                          <span className="tnum font-mono text-foreground">
+                            {mine.home_pred}–{mine.away_pred}
+                          </span>
                         </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <TeamBadge src={f.away_crest} alt={f.away_team} size={16} />
-                        <span className="min-w-0 flex-1 truncate font-semibold">
-                          {f.away_team}
+                        <span className={pointsClass(mine.points)}>
+                          {mine.points == null ? "" : `${mine.points} pt`}
                         </span>
-                      </div>
-                    </div>
-                    <div className="mt-1.5 text-xs">
-                      <StatusLine f={f} />
-                    </div>
-                  </td>
-                  {members.map((m) => {
-                    const p = cell.get(f.id)?.get(m.user_id);
-                    return (
-                      <td key={m.user_id} className="w-16 px-2 py-3 text-center">
-                        {p ? (
-                          <div>
-                            <div className="font-mono">
-                              {p.home_pred}–{p.away_pred}
-                            </div>
-                            <div className={`text-xs ${pointsClass(p.points)}`}>
-                              {p.points == null ? "—" : `${p.points} pt`}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-muted/50">—</span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-border bg-surface-2/40 font-bold">
-              <td className="sticky left-0 z-10 w-40 max-w-[44vw] bg-surface-2/40 px-3 py-3 text-left">
-                GW points
-              </td>
-              {members.map((m) => (
-                <td
-                  key={m.user_id}
-                  className="w-16 px-2 py-3 text-center text-accent"
-                >
-                  {totals.get(m.user_id) ?? 0}
-                </td>
-              ))}
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+                      </>
+                    ) : (
+                      <span className="text-muted/60">no pick</span>
+                    )}
+                    <ChevronDown
+                      size={16}
+                      className="transition-transform group-open:rotate-180"
+                      aria-hidden
+                    />
+                  </span>
+                </div>
+              </summary>
+
+              <div className="mt-3 space-y-1 border-t border-border/60 pt-3">
+                {rows.map((r) => (
+                  <div
+                    key={r.user_id}
+                    className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm ${
+                      r.me ? "bg-surface-2/60" : ""
+                    }`}
+                  >
+                    <span className="min-w-0 flex-1 truncate">
+                      {r.name}
+                      {r.me && <span className="ml-1.5 text-xs text-muted">you</span>}
+                    </span>
+                    <span className="tnum font-mono">
+                      {r.pred ? `${r.pred.home_pred}–${r.pred.away_pred}` : "—"}
+                    </span>
+                    <span
+                      className={`w-12 shrink-0 text-right text-xs ${pointsClass(r.points)}`}
+                    >
+                      {r.points == null ? "—" : `${r.points} pt`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </details>
+          );
+        })}
+      </section>
     </div>
   );
 }
