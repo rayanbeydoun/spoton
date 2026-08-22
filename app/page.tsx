@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CreateLeagueForm } from "@/components/CreateLeagueForm";
 import { JoinLeagueForm } from "@/components/JoinLeagueForm";
-import { EnableNotifications } from "@/components/EnableNotifications";
 import { competitionLabel } from "@/lib/format";
 import type { League } from "@/lib/types";
 
@@ -40,8 +39,6 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-muted">Your prediction leagues</p>
       </div>
-
-      <EnableNotifications />
 
       {leagues.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2">
