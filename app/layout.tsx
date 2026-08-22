@@ -7,6 +7,7 @@ import { isAdminEmail } from "@/lib/admin";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { BottomNav } from "@/components/BottomNav";
 import { Logo } from "@/components/Logo";
+import { UserMessageModal } from "@/components/UserMessageModal";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -32,6 +33,15 @@ export default async function RootLayout({
   } = await supabase.auth.getUser();
   const admin = isAdminEmail(user?.email);
 
+  const { data: messages } = user
+    ? await supabase
+        .from("user_messages")
+        .select("id, title, body, emoji")
+        .eq("user_id", user.id)
+        .is("dismissed_at", null)
+        .order("created_at", { ascending: true })
+    : { data: [] };
+
   return (
     <html
       lang="en"
@@ -39,6 +49,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
+        <UserMessageModal messages={messages ?? []} />
         <header className="pt-safe border-b border-border/70 bg-background/60 backdrop-blur sticky top-0 z-20">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
             <Link href="/" className="flex items-center" aria-label="SpotOn home">

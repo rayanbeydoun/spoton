@@ -207,3 +207,18 @@ export async function updateDisplayNameAction(
     return { error: (e as Error).message };
   }
 }
+
+// --- In-app messages --------------------------------------------------------
+
+export async function dismissMessage(id: string): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase
+    .from("user_messages")
+    .update({ dismissed_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("user_id", user.id);
+}
