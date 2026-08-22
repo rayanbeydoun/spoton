@@ -222,3 +222,41 @@ export async function dismissMessage(id: string): Promise<void> {
     .eq("id", id)
     .eq("user_id", user.id);
 }
+
+export async function sendUserMessageAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    await requireAdmin();
+
+    const recipient = String(formData.get("recipient") ?? "");
+    const title = String(formData.get("title") ?? "").trim();
+    const body = String(formData.get("body") ?? "").trim();
+    const emoji = String(formData.get("emoji") ?? "").trim() || null;
+    if (!recipient) return { error: "Pick who it's going to." };
+    if (!title || !body) return { error: "Add a title and a message." };
+
+    const service = createServiceClient();
+    let rows: { user_id: string; title: string; body: string; emoji: string | null }[];
+    if (recipient === "ALL") {
+      const { data: profiles } = await service.from("profiles").select("id");
+      rows = (profiles ?? []).map((p) => ({ user_id: p.id as string, title, body, emoji }));
+    } else {
+      rows = [{ user_id: recipient, title, body, emoji }];
+    }
+    if (!rows.length) return { error: "No recipients found." };
+
+    const { error } = await service.from("user_messages").insert(rows);
+    if (error) return { error: error.message };
+
+    return {
+      ok:
+        recipient === "ALL"
+          ? `Popup sent to all ${rows.length} players 🎯`
+          : "Popup sent — they'll see it next time they open the app 🎯",
+    };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}

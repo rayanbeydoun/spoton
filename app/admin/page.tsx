@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { SyncButton } from "@/components/SyncButton";
+import { SendMessageForm } from "@/components/SendMessageForm";
 import { FixtureEditForm } from "@/components/FixtureEditForm";
 import { fmtDateTime, seasonLabel } from "@/lib/format";
 import type { Fixture, FixtureStatus, Gameweek } from "@/lib/types";
@@ -29,6 +31,17 @@ export default async function AdminPage() {
   }
 
   const season = Number(process.env.NEXT_PUBLIC_DEFAULT_SEASON ?? 2025);
+
+  // All registered players (service role bypasses RLS for the recipient list).
+  const service = createServiceClient();
+  const { data: playerRows } = await service
+    .from("profiles")
+    .select("id, display_name")
+    .order("display_name", { ascending: true });
+  const players = (playerRows ?? []).map((p) => ({
+    id: p.id as string,
+    name: p.display_name as string,
+  }));
 
   const { data: gwData } = await supabase
     .from("gameweeks")
@@ -60,6 +73,15 @@ export default async function AdminPage() {
         <h1 className="text-2xl font-extrabold">Admin</h1>
         <p className="text-muted">Season {seasonLabel(season)}</p>
       </div>
+
+      <section className="card space-y-3">
+        <h2 className="text-lg font-bold">Send a player message 🎯</h2>
+        <p className="text-sm text-muted">
+          Drop a popup on a player&apos;s account (or everyone&apos;s). They see it
+          next time they open SpotOn, then dismiss it.
+        </p>
+        <SendMessageForm players={players} />
+      </section>
 
       <section className="card space-y-3">
         <h2 className="text-lg font-bold">Fixtures &amp; results</h2>
