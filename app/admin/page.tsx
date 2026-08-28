@@ -5,9 +5,10 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { SyncButton } from "@/components/SyncButton";
 import { SendMessageForm } from "@/components/SendMessageForm";
+import { ExtendDeadlineForm } from "@/components/ExtendDeadlineForm";
 import { FixtureEditForm } from "@/components/FixtureEditForm";
 import { fmtDateTime, seasonLabel } from "@/lib/format";
-import type { Fixture, FixtureStatus, Gameweek } from "@/lib/types";
+import { isLocked, type Fixture, type FixtureStatus, type Gameweek } from "@/lib/types";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -81,6 +82,23 @@ export default async function AdminPage() {
           next time they open SpotOn, then dismiss it.
         </p>
         <SendMessageForm players={players} />
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="text-lg font-bold">Reopen predictions ⏱️</h2>
+        <p className="text-sm text-muted">
+          Give a gameweek extra time if someone forgot to submit. It reopens the{" "}
+          <span className="font-semibold">whole</span> gameweek, so only use it{" "}
+          <span className="font-semibold">before</span> that gameweek&apos;s matches
+          kick off — otherwise a late player could predict games that already finished.
+        </p>
+        <ExtendDeadlineForm
+          gameweeks={gameweeks.map((g) => ({
+            id: g.id,
+            number: g.number,
+            locked: isLocked(g),
+          }))}
+        />
       </section>
 
       <section className="card space-y-3">

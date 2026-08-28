@@ -223,6 +223,39 @@ export async function dismissMessage(id: string): Promise<void> {
     .eq("user_id", user.id);
 }
 
+export async function extendDeadlineAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    await requireAdmin();
+    const gameweekId = String(formData.get("gameweek_id") ?? "");
+    const minutes = Math.max(
+      1,
+      Math.min(720, Math.trunc(Number(formData.get("minutes") ?? 15))),
+    );
+    if (!gameweekId) return { error: "Pick a gameweek." };
+
+    const service = createServiceClient();
+    const newDeadline = new Date(Date.now() + minutes * 60_000).toISOString();
+    const { data, error } = await service
+      .from("gameweeks")
+      .update({ deadline: newDeadline })
+      .eq("id", gameweekId)
+      .select("number")
+      .single();
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin");
+    revalidatePath("/predict");
+    return {
+      ok: `Gameweek ${data?.number ?? ""} is open again for ${minutes} more minute${minutes === 1 ? "" : "s"}.`,
+    };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
 export async function sendUserMessageAction(
   _prev: FormState,
   formData: FormData,
