@@ -4,7 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { PredictionForm, type FixtureVM } from "@/components/PredictionForm";
 import { LocalTime } from "@/components/LocalTime";
 import { fmtDateTime } from "@/lib/format";
-import { isLocked, type Fixture, type Gameweek, type Prediction } from "@/lib/types";
+import {
+  effectiveDeadline,
+  isLocked,
+  type Fixture,
+  type Gameweek,
+  type Prediction,
+} from "@/lib/types";
 
 export default async function PredictPage({
   params,
@@ -67,6 +73,11 @@ export default async function PredictPage({
   }));
 
   const locked = isLocked(gameweekRow);
+  const reopenActive =
+    !locked &&
+    gameweekRow.deadline != null &&
+    new Date(gameweekRow.deadline).getTime() <= Date.now();
+  const shownDeadline = effectiveDeadline(gameweekRow);
   const backHref = league ? `/leagues/${league}` : "/";
 
   return (
@@ -76,12 +87,16 @@ export default async function PredictPage({
           ← Back
         </Link>
         <h1 className="text-2xl font-extrabold">Gameweek {gameweekRow.number}</h1>
-        <p className="text-muted">
-          {locked ? "Locked · " : "Predictions lock at "}
-          {gameweekRow.deadline ? (
+        <p className={reopenActive ? "font-semibold text-live" : "text-muted"}>
+          {locked
+            ? "Locked · "
+            : reopenActive
+              ? "⏱️ Reopened — closes "
+              : "Predictions lock at "}
+          {shownDeadline ? (
             <LocalTime
-              iso={gameweekRow.deadline}
-              fallback={fmtDateTime(gameweekRow.deadline)}
+              iso={shownDeadline}
+              fallback={fmtDateTime(shownDeadline)}
               withZone
             />
           ) : (

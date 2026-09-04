@@ -237,10 +237,11 @@ export async function extendDeadlineAction(
     if (!gameweekId) return { error: "Pick a gameweek." };
 
     const service = createServiceClient();
-    const newDeadline = new Date(Date.now() + minutes * 60_000).toISOString();
+    // A reopen window the sync won't overwrite; picks made before it count as on time.
+    const reopenUntil = new Date(Date.now() + minutes * 60_000).toISOString();
     const { data, error } = await service
       .from("gameweeks")
-      .update({ deadline: newDeadline })
+      .update({ reopen_until: reopenUntil })
       .eq("id", gameweekId)
       .select("number")
       .single();

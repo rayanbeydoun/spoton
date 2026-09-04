@@ -7,7 +7,7 @@ import {
   type FdMatch,
 } from "@/lib/football";
 import { scoreEntry } from "@/lib/scoring";
-import type { GameweekStatus } from "@/lib/types";
+import { effectiveDeadline, type GameweekStatus } from "@/lib/types";
 
 export type SyncResult = {
   gameweeks: number;
@@ -117,11 +117,17 @@ export async function scoreFinishedFixtures(season: number): Promise<number> {
 
   const { data: gws } = await supabase
     .from("gameweeks")
-    .select("id, deadline")
+    .select("id, deadline, reopen_until")
     .eq("season", season);
   const gwIds = (gws ?? []).map((g) => g.id);
   if (!gwIds.length) return 0;
-  const deadlineByGw = new Map((gws ?? []).map((g) => [g.id, g.deadline as string | null]));
+  // Use the reopen-aware cut-off so picks made in an admin-reopened window count.
+  const deadlineByGw = new Map(
+    (gws ?? []).map((g) => [
+      g.id,
+      effectiveDeadline(g as { deadline: string | null; reopen_until: string | null }),
+    ]),
+  );
 
   const { data: fixtures } = await supabase
     .from("fixtures")
